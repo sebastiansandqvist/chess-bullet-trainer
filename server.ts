@@ -28,17 +28,13 @@ command("setoption name Hash value 256");
 command("position startpos");
 command("go movetime 200");
 
-{
-  const { depth } = await waitForBestMove();
-}
+await waitForBestMove();
 
 const replyMove = "b2b3";
 command(`position startpos moves ${replyMove}`);
 command("go movetime 200");
 
-{
-  const { depth } = await waitForBestMove();
-}
+await waitForBestMove();
 
 // ---- shutdown ----
 command("quit");
