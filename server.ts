@@ -31,7 +31,6 @@ command("go movetime 200");
 await waitUntil("bestmove");
 
 const replyMove = "e2e4";
-console.log(replyMove);
 command(`position startpos moves ${replyMove}`);
 command("go movetime 200");
 

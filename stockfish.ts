@@ -11,7 +11,7 @@ export async function waitUntil(needle: string) {
     if (done || value === undefined) return "";
     for (const line of (value).split("\n")) {
       if (line.startsWith(needle)) {
-        console.log(`line: ${line}`);
+        console.log(`IN  | ${line}`);
         return line;
       }
     }
@@ -19,7 +19,7 @@ export async function waitUntil(needle: string) {
 };
 
 export function command(command: string) {
-  console.log(`exec: ${command}`);
+  console.log(`OUT | ${command}`);
   proc.stdin.write(`${command}\n`);
 }
 
