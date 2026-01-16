@@ -14,11 +14,7 @@ client-side:
 
 // ---- boot ----
 command("uci");
-
 await waitUntil("uciok");
-
-// configure
-command("setoption name Hash value 256");
 
 // ---- move ----
 command("position startpos");
