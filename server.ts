@@ -15,10 +15,6 @@ const proc = Bun.spawn(["stockfish"], {
   stdout: "pipe",
 });
 
-if (!proc.stdin || !proc.stdout) {
-  throw new Error("Failed to start Stockfish");
-}
-
 const waitTextStream = proc.stdout.pipeThrough(new TextDecoderStream());
 const waitIterator = waitTextStream[Symbol.asyncIterator]();
 let partialLine = "";
@@ -48,8 +44,6 @@ proc.stdin.write("setoption name Ponder value false\n");
 proc.stdin.write("setoption name Threads value 1\n");
 proc.stdin.write("setoption name Hash value 256\n");
 proc.stdin.write("setoption name UCI_LimitStrength value false\n");
-proc.stdin.write("isready\n");
-await waitUntil("readyok");
 
 // ---- move ----
 proc.stdin.write("position startpos\n");
@@ -66,4 +60,4 @@ await waitUntil("bestmove");
 
 // ---- shutdown ----
 proc.stdin.write("quit\n");
-proc.kill();
+proc.kill()
