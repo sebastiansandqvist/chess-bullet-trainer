@@ -1,3 +1,5 @@
+import { command, shutdown, waitUntil } from "./stockfish";
+
 /*
 
 client-side:
@@ -10,51 +12,31 @@ client-side:
   - unlimited stack of premoves. each costs 0.1s.
 */
 
-const proc = Bun.spawn(["stockfish"], {
-  stdin: "pipe",
-  stdout: "pipe",
-});
-
-const waitIterator = proc.stdout.pipeThrough(new TextDecoderStream())[Symbol.asyncIterator]();
-
-const waitUntil = async (needle: string) => {
-  while (true) {
-    const { value, done } = await waitIterator.next();
-    if (done || value === undefined) return "";
-    for (const line of (value).split("\n")) {
-      if (line.startsWith(needle)) {
-        console.log(line);
-        return line;
-      }
-    }
-  }
-};
-
 // ---- boot ----
-proc.stdin.write("uci\n");
+command("uci");
 
 await waitUntil("uciok");
 
 // configure
-proc.stdin.write("setoption name Hash value 256\n");
+command("setoption name Hash value 256");
 // these are all defaults in v17.1
-// proc.stdin.write("setoption name Ponder value false\n");
-// proc.stdin.write("setoption name Threads value 1\n");
-// proc.stdin.write("setoption name UCI_LimitStrength value false\n");
+// command("setoption name Ponder value false");
+// command("setoption name Threads value 1");
+// command("setoption name UCI_LimitStrength value false");
 
 // ---- move ----
-proc.stdin.write("position startpos\n");
-proc.stdin.write("go movetime 200\n");
+command("position startpos");
+command("go movetime 200");
 
 await waitUntil("bestmove");
 
 const replyMove = "e2e4";
 console.log(replyMove);
-proc.stdin.write(`position startpos moves ${replyMove}\n`);
-proc.stdin.write("go movetime 200\n");
+command(`position startpos moves ${replyMove}`);
+command("go movetime 200");
 
 await waitUntil("bestmove");
 
 // ---- shutdown ----
-proc.stdin.write("quit\n");
-proc.kill()
+command("quit");
+shutdown();

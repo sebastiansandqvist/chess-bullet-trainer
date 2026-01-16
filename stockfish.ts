@@ -18,7 +18,11 @@ export async function waitUntil(needle: string) {
   }
 };
 
-export async function command(command: string) {
+export function command(command: string) {
   console.log(`exec: ${command}`);
   proc.stdin.write(`${command}\n`);
+}
+
+export function shutdown() {
+  proc.kill();
 }
