@@ -1,4 +1,4 @@
-import { command, shutdown, waitBestmoveWithDepth, waitUntil } from "./stockfish";
+import { command, shutdown, waitForBestMove, waitUntil } from "./stockfish";
 
 /*
 
@@ -29,17 +29,15 @@ command("position startpos");
 command("go movetime 200");
 
 {
-  const { maxDepth } = await waitBestmoveWithDepth();
-  console.log(`maxDepth: ${maxDepth}`);
+  const { depth } = await waitForBestMove();
 }
 
-const replyMove = "e2e4";
+const replyMove = "b2b3";
 command(`position startpos moves ${replyMove}`);
 command("go movetime 200");
 
 {
-  const { maxDepth } = await waitBestmoveWithDepth();
-  console.log(`maxDepth: ${maxDepth}`);
+  const { depth } = await waitForBestMove();
 }
 
 // ---- shutdown ----
