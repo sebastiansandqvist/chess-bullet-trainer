@@ -19,10 +19,6 @@ await waitUntil("uciok");
 
 // configure
 command("setoption name Hash value 256");
-// these are all defaults in v17.1
-// command("setoption name Ponder value false");
-// command("setoption name Threads value 1");
-// command("setoption name UCI_LimitStrength value false");
 
 // ---- move ----
 command("position startpos");
