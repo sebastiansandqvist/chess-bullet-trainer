@@ -29,19 +29,8 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
       (piece) => piece.rank == rank && piece.file === file,
     );
 
-    if (state.mouse.justPressed) {
-      console.log({ rank, file });
-      console.log(pieceUnderCursor);
-    }
-
     if (pieceUnderCursor !== -1 && !state.dragging && state.mouse.justPressed) {
-      console.log({
-        rank,
-        file,
-        pieceUnderCursor,
-      });
       state.dragging = pieceUnderCursor;
-      console.log("dragging");
     }
 
     if (state.mouse.justReleased && state.dragging) {
@@ -140,7 +129,6 @@ function drawPieces(
   const padding = squareSize * 0.08;
   const pieceSize = squareSize - padding * 2;
 
-  // for (const piece of piecesToDraw) {
   for (let i = 0; i < piecesToDraw.length; i++) {
     const piece = piecesToDraw[i]!;
     const img = pieceImage(piece.type, piece.color);
