@@ -1,52 +1,10 @@
 import { pieceImage } from './pieces';
+import { cleanupInputs, PieceColor, PieceType, state } from './state';
 
 const green = '#769656';
 const white = '#eeeed2';
 
-type PieceType = 'pawn' | 'rook' | 'knight' | 'bishop' | 'queen' | 'king';
-type PieceColor = 'white' | 'black';
-
-const pieces: { rank: number; file: number; type: PieceType; color: PieceColor }[] = [
-  // White back rank (rank 1)
-  { rank: 1, file: 1, type: 'rook', color: 'white' },
-  { rank: 1, file: 2, type: 'knight', color: 'white' },
-  { rank: 1, file: 3, type: 'bishop', color: 'white' },
-  { rank: 1, file: 4, type: 'queen', color: 'white' },
-  { rank: 1, file: 5, type: 'king', color: 'white' },
-  { rank: 1, file: 6, type: 'bishop', color: 'white' },
-  { rank: 1, file: 7, type: 'knight', color: 'white' },
-  { rank: 1, file: 8, type: 'rook', color: 'white' },
-
-  // White pawns (rank 2)
-  { rank: 2, file: 1, type: 'pawn', color: 'white' },
-  { rank: 2, file: 2, type: 'pawn', color: 'white' },
-  { rank: 2, file: 3, type: 'pawn', color: 'white' },
-  { rank: 2, file: 4, type: 'pawn', color: 'white' },
-  { rank: 2, file: 5, type: 'pawn', color: 'white' },
-  { rank: 2, file: 6, type: 'pawn', color: 'white' },
-  { rank: 2, file: 7, type: 'pawn', color: 'white' },
-  { rank: 2, file: 8, type: 'pawn', color: 'white' },
-
-  // Black pawns (rank 7)
-  { rank: 7, file: 1, type: 'pawn', color: 'black' },
-  { rank: 7, file: 2, type: 'pawn', color: 'black' },
-  { rank: 7, file: 3, type: 'pawn', color: 'black' },
-  { rank: 7, file: 4, type: 'pawn', color: 'black' },
-  { rank: 7, file: 5, type: 'pawn', color: 'black' },
-  { rank: 7, file: 6, type: 'pawn', color: 'black' },
-  { rank: 7, file: 7, type: 'pawn', color: 'black' },
-  { rank: 7, file: 8, type: 'pawn', color: 'black' },
-
-  // Black back rank (rank 8)
-  { rank: 8, file: 1, type: 'rook', color: 'black' },
-  { rank: 8, file: 2, type: 'knight', color: 'black' },
-  { rank: 8, file: 3, type: 'bishop', color: 'black' },
-  { rank: 8, file: 4, type: 'queen', color: 'black' },
-  { rank: 8, file: 5, type: 'king', color: 'black' },
-  { rank: 8, file: 6, type: 'bishop', color: 'black' },
-  { rank: 8, file: 7, type: 'knight', color: 'black' },
-  { rank: 8, file: 8, type: 'rook', color: 'black' },
-];
+function update() {}
 
 export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
   const tick = () => {
@@ -54,7 +12,9 @@ export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('!!');
     const rect = canvas.getBoundingClientRect();
+    const boardRect = calculateBoardRect(rect);
 
+    // setup
     {
       const dpr = window.devicePixelRatio;
       canvas.width = rect.width * dpr;
@@ -62,12 +22,22 @@ export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
       ctx.scale(dpr, dpr);
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // update
+    {
+      update();
+    }
 
-    const boardRect = calculateBoardRect(rect);
-    drawBoard(ctx, boardRect);
+    // draw
+    {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBoard(ctx, boardRect);
+      drawPieces(ctx, boardRect, state.pieces);
+    }
 
-    drawPieces(ctx, boardRect, pieces);
+    // cleanup
+    {
+      cleanupInputs();
+    }
   };
   tick();
 };
