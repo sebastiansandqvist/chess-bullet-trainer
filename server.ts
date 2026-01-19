@@ -23,6 +23,8 @@ strats:
   - tickle to buy time to think - https://www.chess.com/game/live/161599628179?username=hansen&move=46
   - think on opponent's time
   - hover next moves if there is a likely sequence but not safe to premove
+  - endgame examples:
+    1. https://www.youtube.com/watch?v=PtBjKCVo2so&t=495s
 
 */
 
