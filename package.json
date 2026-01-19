@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@tanstack/solid-query": "5.90.22",
-    "solid-js": "1.9.10"
+    "solid-js": "1.9.10",
+    "stockfish": "17.1.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.18",

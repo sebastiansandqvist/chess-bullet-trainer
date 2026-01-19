@@ -1,11 +1,9 @@
-/* @refresh reload */
+import { onCleanup } from 'solid-js';
+import { pieceImage } from './pieces';
+import { cleanupInputs, PieceColor, PieceType, state } from './state';
 
-import { onCleanup } from "solid-js";
-import { pieceImage } from "./pieces";
-import { cleanupInputs, PieceColor, PieceType, state } from "./state";
-
-const green = "#769656";
-const white = "#eeeed2";
+const green = '#769656';
+const white = '#eeeed2';
 
 function update(boardRect: BoardRect, canvasRect: DOMRect) {
   const mouseRelativeToCanvas = {
@@ -25,9 +23,7 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
     const file = Math.floor((mouseRelativeToCanvas.x / boardRect.size) * 8) + 1;
     const rank = 8 - Math.floor((mouseRelativeToCanvas.y / boardRect.size) * 8);
 
-    const pieceUnderCursor = state.pieces.findIndex(
-      (piece) => piece.rank == rank && piece.file === file,
-    );
+    const pieceUnderCursor = state.pieces.findIndex((piece) => piece.rank == rank && piece.file === file);
 
     if (pieceUnderCursor !== -1 && !state.dragging && state.mouse.justPressed) {
       state.dragging = pieceUnderCursor;
@@ -43,8 +39,8 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
 
 export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
   const tick = () => {
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("!!");
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('!!');
     const rect = canvas.getBoundingClientRect();
     const boardRect = calculateBoardRect(rect);
 
@@ -90,12 +86,7 @@ function drawBoard(ctx: CanvasRenderingContext2D, boardRect: BoardRect) {
     for (let col = 0; col < squares; col++) {
       const isDark = (row + col) % 2 === 1;
       ctx.fillStyle = isDark ? green : white;
-      ctx.fillRect(
-        boardRect.x + col * squareSize,
-        boardRect.y + row * squareSize,
-        squareSize,
-        squareSize,
-      );
+      ctx.fillRect(boardRect.x + col * squareSize, boardRect.y + row * squareSize, squareSize, squareSize);
     }
   }
 }
