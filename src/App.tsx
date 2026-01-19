@@ -17,8 +17,16 @@ export const App = () => {
           <li>Scenario presets</li>
         </ul>
       </aside>
-      <main class="bg-green-500/20">
+      <main class="flex flex-col gap-2 justify-center bg-green-500/20">
+        <div class="flex items-center justify-between">
+          name
+          <div class="rounded bg-black/20 text-white p-2">00:00</div>
+        </div>
         <ChessCanvas />
+        <div class="flex items-center justify-between">
+          name
+          <div class="rounded bg-white/50 text-black p-2">00:00</div>
+        </div>
       </main>
     </div>
   );
@@ -26,7 +34,7 @@ export const App = () => {
 
 const ChessCanvas: Component = () => {
   return (
-    <div class="relative h-full w-full">
+    <div class="relative max-h-full max-w-full aspect-square">
       <canvas class="absolute inset-0 h-full w-full" ref={startCanvasLoop} />
     </div>
   );

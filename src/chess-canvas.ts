@@ -1,3 +1,5 @@
+import { pieceImage } from './pieces';
+
 const green = '#769656';
 const white = '#eeeed2';
 
@@ -97,3 +99,24 @@ function calculateBoardRect(rect: DOMRect) {
 }
 
 type BoardRect = ReturnType<typeof calculateBoardRect>;
+
+function drawPieces(
+  ctx: CanvasRenderingContext2D,
+  boardRect: BoardRect,
+  piecesToDraw: { rank: number; file: number; type: PieceType; color: PieceColor }[],
+) {
+  const squares = 8;
+  const squareSize = boardRect.size / squares;
+  const padding = squareSize * 0.08;
+  const pieceSize = squareSize - padding * 2;
+
+  for (const piece of piecesToDraw) {
+    const col = piece.file - 1;
+    const row = squares - piece.rank;
+    const x = boardRect.x + col * squareSize + padding;
+    const y = boardRect.y + row * squareSize + padding;
+    const img = pieceImage(piece.type, piece.color);
+    if (!img.complete) continue;
+    ctx.drawImage(img, x, y, pieceSize, pieceSize);
+  }
+}

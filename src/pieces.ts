@@ -11,13 +11,21 @@ import queenLight from './pieces/Chess_qlt45.svg';
 import rookDark from './pieces/Chess_rdt45.svg';
 import rookLight from './pieces/Chess_rlt45.svg';
 
+function toImage(url: string) {
+  const img = new Image();
+  img.src = url;
+  return img;
+}
+
+const pieces = {
+  pawn: { white: toImage(pawnLight), black: toImage(pawnDark) },
+  knight: { white: toImage(knightLight), black: toImage(knightDark) },
+  bishop: { white: toImage(bishopLight), black: toImage(bishopDark) },
+  rook: { white: toImage(rookLight), black: toImage(rookDark) },
+  queen: { white: toImage(queenLight), black: toImage(queenDark) },
+  king: { white: toImage(kingLight), black: toImage(kingDark) },
+};
+
 export function pieceImage(type: 'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king', color: 'white' | 'black') {
-  return {
-    pawn: { white: pawnLight, black: pawnDark },
-    knight: { white: knightLight, black: knightDark },
-    bishop: { white: bishopLight, black: bishopDark },
-    rook: { white: rookLight, black: rookDark },
-    queen: { white: queenLight, black: queenDark },
-    king: { white: kingLight, black: kingDark },
-  }[type][color];
+  return pieces[type][color];
 }
