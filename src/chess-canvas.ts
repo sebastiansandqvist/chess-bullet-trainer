@@ -1,16 +1,61 @@
-import { pieceImage } from './pieces';
-import { cleanupInputs, PieceColor, PieceType, state } from './state';
+/* @refresh reload */
 
-const green = '#769656';
-const white = '#eeeed2';
+import { onCleanup } from "solid-js";
+import { pieceImage } from "./pieces";
+import { cleanupInputs, PieceColor, PieceType, state } from "./state";
 
-function update() {}
+const green = "#769656";
+const white = "#eeeed2";
+
+function update(boardRect: BoardRect, canvasRect: DOMRect) {
+  const mouseRelativeToCanvas = {
+    x: state.mouse.x - canvasRect.left,
+    y: state.mouse.y - canvasRect.top,
+  };
+  state.mouse.boardX = mouseRelativeToCanvas.x;
+  state.mouse.boardY = mouseRelativeToCanvas.y;
+
+  const isMouseOverBoard =
+    mouseRelativeToCanvas.x >= boardRect.x &&
+    mouseRelativeToCanvas.x <= boardRect.x + boardRect.size &&
+    mouseRelativeToCanvas.y >= boardRect.y &&
+    mouseRelativeToCanvas.y <= boardRect.y + boardRect.size;
+
+  if (isMouseOverBoard) {
+    const file = Math.floor((mouseRelativeToCanvas.x / boardRect.size) * 8) + 1;
+    const rank = 8 - Math.floor((mouseRelativeToCanvas.y / boardRect.size) * 8);
+
+    const pieceUnderCursor = state.pieces.findIndex(
+      (piece) => piece.rank == rank && piece.file === file,
+    );
+
+    if (state.mouse.justPressed) {
+      console.log({ rank, file });
+      console.log(pieceUnderCursor);
+    }
+
+    if (pieceUnderCursor !== -1 && !state.dragging && state.mouse.justPressed) {
+      console.log({
+        rank,
+        file,
+        pieceUnderCursor,
+      });
+      state.dragging = pieceUnderCursor;
+      console.log("dragging");
+    }
+
+    if (state.mouse.justReleased && state.dragging) {
+      state.pieces[state.dragging]!.file = file;
+      state.pieces[state.dragging]!.rank = rank;
+      state.dragging = false;
+    }
+  }
+}
 
 export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
   const tick = () => {
-    requestAnimationFrame(tick);
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('!!');
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("!!");
     const rect = canvas.getBoundingClientRect();
     const boardRect = calculateBoardRect(rect);
 
@@ -24,7 +69,7 @@ export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
 
     // update
     {
-      update();
+      update(boardRect, rect);
     }
 
     // draw
@@ -38,8 +83,13 @@ export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
     {
       cleanupInputs();
     }
+    return requestAnimationFrame(tick);
   };
-  tick();
+  let raf = tick();
+
+  onCleanup(() => {
+    cancelAnimationFrame(raf);
+  });
 };
 
 function drawBoard(ctx: CanvasRenderingContext2D, boardRect: BoardRect) {
@@ -51,7 +101,12 @@ function drawBoard(ctx: CanvasRenderingContext2D, boardRect: BoardRect) {
     for (let col = 0; col < squares; col++) {
       const isDark = (row + col) % 2 === 1;
       ctx.fillStyle = isDark ? green : white;
-      ctx.fillRect(boardRect.x + col * squareSize, boardRect.y + row * squareSize, squareSize, squareSize);
+      ctx.fillRect(
+        boardRect.x + col * squareSize,
+        boardRect.y + row * squareSize,
+        squareSize,
+        squareSize,
+      );
     }
   }
 }
@@ -73,20 +128,37 @@ type BoardRect = ReturnType<typeof calculateBoardRect>;
 function drawPieces(
   ctx: CanvasRenderingContext2D,
   boardRect: BoardRect,
-  piecesToDraw: { rank: number; file: number; type: PieceType; color: PieceColor }[],
+  piecesToDraw: {
+    rank: number;
+    file: number;
+    type: PieceType;
+    color: PieceColor;
+  }[],
 ) {
   const squares = 8;
   const squareSize = boardRect.size / squares;
   const padding = squareSize * 0.08;
   const pieceSize = squareSize - padding * 2;
 
-  for (const piece of piecesToDraw) {
-    const col = piece.file - 1;
-    const row = squares - piece.rank;
-    const x = boardRect.x + col * squareSize + padding;
-    const y = boardRect.y + row * squareSize + padding;
+  // for (const piece of piecesToDraw) {
+  for (let i = 0; i < piecesToDraw.length; i++) {
+    const piece = piecesToDraw[i]!;
     const img = pieceImage(piece.type, piece.color);
-    if (!img.complete) continue;
-    ctx.drawImage(img, x, y, pieceSize, pieceSize);
+    if (i === state.dragging) {
+      ctx.drawImage(
+        img,
+        state.mouse.boardX - pieceSize * 0.5,
+        state.mouse.boardY - pieceSize * 0.5,
+        pieceSize,
+        pieceSize,
+      );
+    } else {
+      const col = piece.file - 1;
+      const row = squares - piece.rank;
+      const x = boardRect.x + col * squareSize + padding;
+      const y = boardRect.y + row * squareSize + padding;
+      if (!img.complete) continue;
+      ctx.drawImage(img, x, y, pieceSize, pieceSize);
+    }
   }
 }
