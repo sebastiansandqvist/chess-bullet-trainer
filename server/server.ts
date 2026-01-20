@@ -1,4 +1,4 @@
-import { command, shutdown, waitForBestMove, waitUntil } from "./stockfish";
+import { command, shutdown, waitForBestMove, waitUntil } from './stockfish';
 
 /*
 
@@ -29,21 +29,21 @@ strats:
 */
 
 // ---- boot ----
-command("uci");
-await waitUntil("uciok");
+command('uci');
+await waitUntil('uciok');
 
 // ---- move ----
-command("position startpos");
-command("go movetime 200");
+command('position startpos');
+command('go movetime 200');
 
 await waitForBestMove();
 
-const replyMove = "b2b3";
+const replyMove = 'b2b3';
 command(`position startpos moves ${replyMove}`);
-command("go movetime 200");
+command('go movetime 200');
 
 await waitForBestMove();
 
 // ---- shutdown ----
-command("quit");
+command('quit');
 shutdown();
