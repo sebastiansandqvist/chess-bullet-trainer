@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     cors: true,
     port: 3003,
-    hmr: false,
+    // hmr: false,
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',

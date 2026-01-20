@@ -8,7 +8,7 @@ import { createStockfishClient } from './stockfish/client';
 export const App = () => {
   return (
     <div class="grid grid-cols-[200px_1fr] min-h-screen">
-      <aside class="bg-red-500/20">
+      <aside class="bg-neutral-800">
         <form class="flex flex-col gap-4 p-4">
           <h2 class="text-lg font-semibold">Setup</h2>
           {/*<div>Starting position (PGN/FEN/URLs)</div>*/}
@@ -69,7 +69,7 @@ export const App = () => {
           {/*<div>Scenario presets</div>*/}
         </form>
       </aside>
-      <main class="flex flex-col gap-2 justify-center bg-green-500/20">
+      <main class="flex flex-col gap-2 justify-center bg-neutral-800">
         <div class="flex items-center justify-between">
           name
           <div class="rounded bg-black/20 text-white p-2">00:00</div>
