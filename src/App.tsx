@@ -1,9 +1,7 @@
-import { Component, onCleanup, onMount } from 'solid-js';
+import { Component } from 'solid-js';
 import { startCanvasLoop } from './chess-canvas';
 import pawnDark from './pieces/Chess_pdt45.svg';
 import pawnLight from './pieces/Chess_plt45.svg';
-import { playMove } from './state';
-import { createStockfishClient } from './stockfish/client';
 
 export const App = () => {
   return (
@@ -69,12 +67,16 @@ export const App = () => {
           {/*<div>Scenario presets</div>*/}
         </form>
       </aside>
-      <main class="flex flex-col gap-2 justify-center bg-neutral-800">
+      <main class="grid grid-rows-[auto_minmax(0,1fr)_auto] h-fit self-center gap-2 bg-neutral-800 p-4 max-w-[70vh] mx-auto">
         <div class="flex items-center justify-between">
           name
           <div class="rounded bg-black/20 text-white p-2">00:00</div>
         </div>
-        <ChessCanvas />
+        <div class="flex min-h-0 min-w-0 items-center justify-center">
+          <div class="w-full max-w-[70vh] aspect-square overflow-hidden">
+            <ChessCanvas />
+          </div>
+        </div>
         <div class="flex items-center justify-between">
           name
           <div class="rounded bg-white/50 text-black p-2">00:00</div>
@@ -85,9 +87,5 @@ export const App = () => {
 };
 
 const ChessCanvas: Component = () => {
-  return (
-    <div class="relative max-h-full max-w-full aspect-square">
-      <canvas class="absolute inset-0 h-full w-full" ref={startCanvasLoop} />
-    </div>
-  );
+  return <canvas class="block h-full w-full" ref={startCanvasLoop} />;
 };

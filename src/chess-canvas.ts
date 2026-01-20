@@ -69,10 +69,14 @@ export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
 
     // setup
     {
-      const dpr = window.devicePixelRatio;
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
+      const dpr = window.devicePixelRatio || 1;
+      const displayWidth = Math.floor(rect.width * dpr);
+      const displayHeight = Math.floor(rect.height * dpr);
+      if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     // update
