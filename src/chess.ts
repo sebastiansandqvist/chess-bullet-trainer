@@ -171,6 +171,11 @@ export function formatMove(move: string) {
   };
 }
 
+export function rankAndFileToString(piece: { rank: number; file: number }) {
+  const file = 'abcdefgh'[piece.file - 1]!;
+  return `${file}${piece.rank}`;
+}
+
 // todo: more legality checks
 export function isLegalMove(move: string) {
   const x = formatMove(move);

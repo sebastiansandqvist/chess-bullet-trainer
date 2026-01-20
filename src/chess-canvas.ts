@@ -1,5 +1,5 @@
 import { onCleanup } from 'solid-js';
-import { isLegalMove, PieceColor, PieceType } from './chess';
+import { isLegalMove, PieceColor, PieceType, rankAndFileToString } from './chess';
 import { pieceImage } from './pieces';
 import { playSound } from './sound-effects';
 import { cleanupInputs, playMove, state } from './state';
@@ -9,11 +9,6 @@ const stockfish = createStockfishClient();
 
 const green = '#769656';
 const white = '#eeeed2';
-
-function rankAndFileToString(piece: { rank: number; file: number }) {
-  const file = 'abcdefgh'[piece.file - 1]!;
-  return `${file}${piece.rank}`;
-}
 
 function update(boardRect: BoardRect, canvasRect: DOMRect) {
   const mouseRelativeToCanvas = {
