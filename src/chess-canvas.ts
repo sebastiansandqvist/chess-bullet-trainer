@@ -1,7 +1,8 @@
 import { onCleanup } from 'solid-js';
+import { isLegalMove, PieceColor, PieceType } from './chess';
 import { pieceImage } from './pieces';
 import { playSound } from './sound-effects';
-import { cleanupInputs, isLegalMove, PieceColor, PieceType, playMove, state } from './state';
+import { cleanupInputs, playMove, state } from './state';
 import { createStockfishClient } from './stockfish/client';
 
 const stockfish = createStockfishClient();
