@@ -34,31 +34,25 @@ export const App = () => {
                 <span class="text-sm text-white/70">White</span>
                 <input
                   class="w-24 rounded-md border border-white/10 bg-neutral-700/60 px-3 py-1.5 text-right text-sm text-white shadow-sm tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-800"
-                  type="number"
-                  min="1"
-                  step="1"
-                  value="60"
+                  type="text"
+                  value="10"
                 />
               </label>
               <label class="flex items-center justify-between gap-2">
                 <span class="text-sm text-white/70">Black</span>
                 <input
                   class="w-24 rounded-md border border-white/10 bg-neutral-700/60 px-3 py-1.5 text-right text-sm text-white shadow-sm tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-800"
-                  type="number"
-                  min="1"
-                  step="1"
-                  value="60"
+                  type="text"
+                  value="10"
                 />
               </label>
             </div>
           </fieldset>
           <label class="flex flex-col gap-2">
-            <span class="text-sm font-medium text-white/70">Time per Stockfish move</span>
+            <span class="text-sm font-medium text-white/70">Seconds per Stockfish move</span>
             <input
               class="w-24 rounded-md border border-white/10 bg-neutral-700/60 px-3 py-1.5 text-right text-sm text-white shadow-sm tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-800"
-              type="number"
-              min="0.1"
-              step="0.1"
+              type="text"
               value="0.5"
             />
           </label>
@@ -89,5 +83,5 @@ export const App = () => {
 };
 
 const ChessCanvas: Component = () => {
-  return <canvas class="block h-full w-full" ref={startCanvasLoop} />;
+  return <canvas class="block rounded h-full w-full" ref={startCanvasLoop} />;
 };
