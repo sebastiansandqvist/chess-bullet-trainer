@@ -69,7 +69,7 @@ export const state = {
   },
 };
 
-document.body.addEventListener('pointerdown', (e) => {
+window.addEventListener('pointerdown', (e) => {
   console.log('pointerdown');
   state.mouse.x = e.clientX;
   state.mouse.y = e.clientY;
@@ -78,6 +78,7 @@ document.body.addEventListener('pointerdown', (e) => {
 });
 
 window.addEventListener('pointerup', (e) => {
+  console.log('pointerup');
   state.mouse.x = e.clientX;
   state.mouse.y = e.clientY;
   state.mouse.isDown = false;
@@ -217,6 +218,18 @@ export function playMove(move: string) {
   const moveToPlay = formatMove(move);
   const piece = state.pieces.find(({ rank, file }) => moveToPlay.from.file === file && moveToPlay.from.rank === rank);
   if (!piece) return;
+  const otherPieceIndex = state.pieces.findIndex(
+    ({ rank, file }) => moveToPlay.to.file === file && moveToPlay.to.rank === rank,
+  );
+  if (otherPieceIndex !== -1) {
+    state.pieces.splice(otherPieceIndex, 1);
+  }
   piece.rank = moveToPlay.to.rank;
   piece.file = moveToPlay.to.file;
+}
+
+// todo: more legality checks
+export function isLegalMove(move: string) {
+  const x = formatMove(move);
+  return !(x.from.file === x.to.file && x.from.rank === x.to.rank);
 }

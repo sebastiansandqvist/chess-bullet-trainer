@@ -1,6 +1,7 @@
 import { onCleanup } from 'solid-js';
+import { isLeftHandSideExpression } from 'typescript';
 import { pieceImage } from './pieces';
-import { cleanupInputs, PieceColor, PieceType, playMove, state } from './state';
+import { cleanupInputs, isLegalMove, PieceColor, PieceType, playMove, state } from './state';
 import { createStockfishClient } from './stockfish/client';
 
 const stockfish = createStockfishClient();
@@ -40,19 +41,21 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
     if (state.mouse.justReleased && state.dragging) {
       const before = rankAndFileToString(state.pieces[state.dragging]!);
       const after = rankAndFileToString({ rank, file });
-      console.log({ before, after });
-      state.pieces[state.dragging]!.file = file;
-      state.pieces[state.dragging]!.rank = rank;
+      const move = `${before}${after}`;
       state.dragging = false;
-      stockfish
-        .sendMove(`${before}${after}`)
-        .then((reply) => {
-          console.log(reply);
-          playMove(reply.move);
-        })
-        .catch((error) => {
-          console.error('[stockfish]', error);
-        });
+
+      if (isLegalMove(move)) {
+        playMove(move);
+        stockfish
+          .sendMove(move)
+          .then((reply) => {
+            console.log(reply);
+            playMove(reply.move);
+          })
+          .catch((error) => {
+            console.error('[stockfish]', error);
+          });
+      }
     }
   }
 }
