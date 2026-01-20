@@ -40,6 +40,7 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
     if (state.mouse.justReleased && state.dragging) {
       const before = rankAndFileToString(state.pieces[state.dragging]!);
       const after = rankAndFileToString({ rank, file });
+      console.log({ before, after });
       state.pieces[state.dragging]!.file = file;
       state.pieces[state.dragging]!.rank = rank;
       state.dragging = false;

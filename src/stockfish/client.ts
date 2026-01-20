@@ -82,17 +82,25 @@ export const createStockfishClient = (workerUrl: string = STOCKFISH_WORKER_URL) 
   };
 
   const sendMove = async (move: string, movetimeMs: number = 200): Promise<StockfishReply> => {
+    console.log('send', move);
     return enqueue(async () => {
       await ready;
       lastDepth = 0;
       moveHistory = [...moveHistory, move];
 
-      send('ucinewgame');
       send(`position startpos moves ${moveHistory.join(' ')}`);
       send(`go movetime ${movetimeMs}`);
 
       return new Promise<StockfishReply>((resolve, reject) => {
-        pending = { resolve, reject };
+        pending = {
+          resolve: (reply) => {
+            if (reply.move) {
+              moveHistory = [...moveHistory, reply.move];
+            }
+            resolve(reply);
+          },
+          reject,
+        };
       });
     });
   };

@@ -204,11 +204,11 @@ function formatMove(move: string) {
   return {
     from: {
       rank: parseInt(move[1]!, 10),
-      file: files.indexOf(move[0]!),
+      file: files.indexOf(move[0]!) + 1,
     },
     to: {
       rank: parseInt(move[3]!, 10),
-      file: files.indexOf(move[2]!),
+      file: files.indexOf(move[2]!) + 1,
     },
   };
 }
