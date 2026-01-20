@@ -81,7 +81,7 @@ export const createStockfishClient = (workerUrl: string = STOCKFISH_WORKER_URL) 
     return next;
   };
 
-  const sendMove = async (move: string, movetimeMs: number = 2000): Promise<StockfishReply> => {
+  const sendMove = async (move: string, movetimeMs: number = 200): Promise<StockfishReply> => {
     return enqueue(async () => {
       await ready;
       lastDepth = 0;

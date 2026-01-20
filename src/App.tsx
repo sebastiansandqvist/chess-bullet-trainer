@@ -2,26 +2,10 @@ import { Component, onCleanup, onMount } from 'solid-js';
 import { startCanvasLoop } from './chess-canvas';
 import pawnDark from './pieces/Chess_pdt45.svg';
 import pawnLight from './pieces/Chess_plt45.svg';
+import { playMove } from './state';
 import { createStockfishClient } from './stockfish/client';
 
 export const App = () => {
-  onMount(() => {
-    const client = createStockfishClient();
-
-    const run = async () => {
-      const reply = await client.sendMove('e2e4');
-      console.log('[stockfish]', reply);
-    };
-
-    run().catch((error) => {
-      console.error('[stockfish]', error);
-    });
-
-    onCleanup(() => {
-      client.dispose();
-    });
-  });
-
   return (
     <div class="grid grid-cols-[200px_1fr] min-h-screen">
       <aside class="bg-red-500/20">

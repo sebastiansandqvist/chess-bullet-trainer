@@ -196,3 +196,27 @@ export function fenToPieces(fen: string) {
 
   return output;
 }
+
+const files = 'abcdefgh'.split('');
+
+function formatMove(move: string) {
+  // like "e7e5"
+  return {
+    from: {
+      rank: parseInt(move[1]!, 10),
+      file: files.indexOf(move[0]!),
+    },
+    to: {
+      rank: parseInt(move[3]!, 10),
+      file: files.indexOf(move[2]!),
+    },
+  };
+}
+
+export function playMove(move: string) {
+  const moveToPlay = formatMove(move);
+  const piece = state.pieces.find(({ rank, file }) => moveToPlay.from.file === file && moveToPlay.from.rank === rank);
+  if (!piece) return;
+  piece.rank = moveToPlay.to.rank;
+  piece.file = moveToPlay.to.file;
+}
