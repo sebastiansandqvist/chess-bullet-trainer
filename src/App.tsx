@@ -10,50 +10,52 @@ export const App = () => {
         <form class="flex flex-col gap-4 p-4">
           <h2 class="text-lg font-semibold">Setup</h2>
           {/*<div>Starting position (PGN/FEN/URLs)</div>*/}
-          <fieldset class="flex flex-col gap-2">
-            <legend class="text-sm font-medium">Color</legend>
+          <fieldset class="flex flex-col gap-3">
+            <legend class="text-sm font-medium text-white/70">Color</legend>
             <div class="flex gap-2">
               <label class="cursor-pointer">
                 <input type="radio" name="playerColor" value="white" checked class="sr-only peer" />
-                <span class="flex aspect-square w-12 items-center justify-center rounded bg-black/20 peer-checked:bg-white">
+                <span class="flex aspect-square w-12 items-center justify-center rounded-md bg-neutral-700/50 ring-1 ring-white/10 transition hover:ring-white/20 peer-checked:ring-2 peer-checked:ring-amber-400 peer-checked:hover:ring-2 peer-checked:hover:ring-amber-400">
                   <img src={pawnLight} alt="White pawn" class="h-6 w-6" />
                 </span>
               </label>
               <label class="cursor-pointer">
                 <input type="radio" name="playerColor" value="black" class="sr-only peer" />
-                <span class="flex aspect-square w-12 items-center justify-center rounded bg-black/20 peer-checked:bg-white">
+                <span class="flex aspect-square w-12 items-center justify-center rounded-md bg-neutral-700/50 ring-1 ring-white/10 transition hover:ring-white/20 peer-checked:ring-2 peer-checked:ring-amber-400 peer-checked:hover:ring-2 peer-checked:hover:ring-amber-400">
                   <img src={pawnDark} alt="Black pawn" class="h-6 w-6" />
                 </span>
               </label>
             </div>
           </fieldset>
-          <fieldset class="flex flex-col gap-2">
-            <legend class="text-sm font-medium">Starting times</legend>
-            <label class="flex items-center justify-between gap-2">
-              <span class="text-sm">White</span>
-              <input
-                class="w-24 rounded border border-black/10 bg-black/20 px-2 py-1 text-right"
-                type="number"
-                min="1"
-                step="1"
-                value="60"
-              />
-            </label>
-            <label class="flex items-center justify-between gap-2">
-              <span class="text-sm">Black</span>
-              <input
-                class="w-24 rounded border border-black/10 bg-black/20 px-2 py-1 text-right"
-                type="number"
-                min="1"
-                step="1"
-                value="60"
-              />
-            </label>
+          <fieldset class="flex flex-col gap-3">
+            <legend class="text-sm font-medium text-white/70">Starting times</legend>
+            <div class="flex flex-col gap-2">
+              <label class="flex items-center justify-between gap-2">
+                <span class="text-sm text-white/70">White</span>
+                <input
+                  class="w-24 rounded-md border border-white/10 bg-neutral-700/60 px-3 py-1.5 text-right text-sm text-white shadow-sm tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-800"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value="60"
+                />
+              </label>
+              <label class="flex items-center justify-between gap-2">
+                <span class="text-sm text-white/70">Black</span>
+                <input
+                  class="w-24 rounded-md border border-white/10 bg-neutral-700/60 px-3 py-1.5 text-right text-sm text-white shadow-sm tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-800"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value="60"
+                />
+              </label>
+            </div>
           </fieldset>
-          <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Time per Stockfish move</span>
+          <label class="flex flex-col gap-2">
+            <span class="text-sm font-medium text-white/70">Time per Stockfish move</span>
             <input
-              class="w-24 rounded border border-black/10 bg-black/20 px-2 py-1 text-right"
+              class="w-24 rounded-md border border-white/10 bg-neutral-700/60 px-3 py-1.5 text-right text-sm text-white shadow-sm tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-800"
               type="number"
               min="0.1"
               step="0.1"
