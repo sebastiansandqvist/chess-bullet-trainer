@@ -131,7 +131,9 @@ export function piecesToFen(
     if (rankIndex < 0 || rankIndex > 7 || fileIndex < 0 || fileIndex > 7) {
       continue;
     }
-    board[rankIndex][fileIndex] = piece;
+    const row = board[rankIndex];
+    if (!row) continue;
+    row[fileIndex] = piece;
   }
 
   const rows = board.map((row) => {

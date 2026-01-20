@@ -1,6 +1,6 @@
 import { onCleanup } from 'solid-js';
-import { isLeftHandSideExpression } from 'typescript';
 import { pieceImage } from './pieces';
+import { playSound } from './sound-effects';
 import { cleanupInputs, isLegalMove, PieceColor, PieceType, playMove, state } from './state';
 import { createStockfishClient } from './stockfish/client';
 
@@ -46,11 +46,13 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
 
       if (isLegalMove(move)) {
         playMove(move);
+        playSound('move');
         stockfish
           .sendMove(move)
           .then((reply) => {
             console.log(reply);
             playMove(reply.move);
+            playSound('move');
           })
           .catch((error) => {
             console.error('[stockfish]', error);
