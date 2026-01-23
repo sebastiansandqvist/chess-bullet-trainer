@@ -1,7 +1,13 @@
-import { formatMove, initialPieces } from './chess';
+import { fenToPieces, formatMove, initialPieces, piecesToFen } from './chess';
+
+const startFen = '4k3/8/8/8/8/8/8/RNBQKBNR w - - 1 1'; // piecesToFen(initialPieces);
 
 export const state = {
   pieces: initialPieces,
+  stockfish: {
+    fen: startFen,
+    movetimeMs: 2000,
+  },
   dragging: false as false | number, // index of dragged piece in the pieces[]
   mouse: {
     x: 0,
@@ -38,6 +44,11 @@ window.addEventListener('pointermove', (e) => {
 export function cleanupInputs() {
   state.mouse.justPressed = false;
   state.mouse.justReleased = false;
+}
+
+export function setPositionFromFen(fen: string) {
+  state.pieces = fenToPieces(fen);
+  state.dragging = false;
 }
 
 export function playMove(move: string) {

@@ -2,15 +2,38 @@ import { onCleanup } from 'solid-js';
 import { isLegalMove, PieceColor, PieceType, rankAndFileToString } from './chess';
 import { pieceImage } from './pieces';
 import { playSound } from './sound-effects';
-import { cleanupInputs, playMove, state } from './state';
-import { createStockfishClient } from './stockfish/client';
+import { cleanupInputs, playMove, setPositionFromFen, state } from './state';
+import { createStockfishClient } from './stockfish/engine';
 
 const stockfish = createStockfishClient();
+let lastFen = '';
+let lastMovetimeMs = 0;
+
+const syncStockfishConfig = () => {
+  const fen = state.stockfish.fen.trim();
+  if (!fen) return;
+  const movetimeMs = state.stockfish.movetimeMs;
+  const fenChanged = fen !== lastFen;
+  const movetimeChanged = movetimeMs !== lastMovetimeMs;
+  if (!fenChanged && !movetimeChanged) return;
+
+  stockfish.configure({ fen, movetimeMs });
+  stockfish.newgame();
+
+  if (fenChanged) {
+    setPositionFromFen(fen);
+  }
+  lastFen = fen;
+  lastMovetimeMs = movetimeMs;
+};
+
+syncStockfishConfig();
 
 const green = '#769656';
 const white = '#eeeed2';
 
 function update(boardRect: BoardRect, canvasRect: DOMRect) {
+  syncStockfishConfig();
   const mouseRelativeToCanvas = {
     x: state.mouse.x - canvasRect.left,
     y: state.mouse.y - canvasRect.top,
@@ -43,17 +66,16 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
       if (isLegalMove(move)) {
         playMove(move);
         playSound('move');
-        stockfish
-          .sendMove(move)
-          .then((reply) => {
-            console.log(reply);
-            playMove(reply.move);
-            playSound('move');
-          })
-          .catch((error) => {
-            console.error('[stockfish]', error);
-          });
+        stockfish.play(move);
       }
+    }
+  }
+
+  if (stockfish.hasBestMove) {
+    const reply = stockfish.takeBestMove();
+    if (reply?.move) {
+      playMove(reply.move);
+      playSound('move');
     }
   }
 }

@@ -2,6 +2,7 @@ import { Component } from 'solid-js';
 import { startCanvasLoop } from './chess-canvas';
 import pawnDark from './pieces/Chess_pdt45.svg';
 import pawnLight from './pieces/Chess_plt45.svg';
+import { state } from './state';
 
 export const App = () => {
   return (
@@ -27,6 +28,17 @@ export const App = () => {
               </label>
             </div>
           </fieldset>
+          <label class="flex flex-col gap-2">
+            <span class="text-sm font-medium text-white/70">Starting position (FEN)</span>
+            <input
+              class="w-full rounded-md border border-white/10 bg-neutral-700/60 px-3 py-1.5 text-sm text-white shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-800"
+              type="text"
+              value={state.stockfish.fen}
+              onInput={(event) => {
+                state.stockfish.fen = event.currentTarget.value;
+              }}
+            />
+          </label>
           <fieldset class="flex flex-col gap-3">
             <legend class="text-sm font-medium text-white/70">Starting times</legend>
             <div class="flex flex-col gap-2">
@@ -53,7 +65,13 @@ export const App = () => {
             <input
               class="w-24 rounded-md border border-white/10 bg-neutral-700/60 px-3 py-1.5 text-right text-sm text-white shadow-sm tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-800"
               type="text"
-              value="0.5"
+              value={state.stockfish.movetimeMs / 1000}
+              onInput={(event) => {
+                const next = Number(event.currentTarget.value);
+                if (!Number.isNaN(next)) {
+                  state.stockfish.movetimeMs = Math.max(1, Math.round(next * 1000));
+                }
+              }}
             />
           </label>
           {/*<div>Move history + depth log</div>*/}
