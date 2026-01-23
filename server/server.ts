@@ -25,6 +25,10 @@ strats:
   - hover next moves if there is a likely sequence but not safe to premove
   - endgame examples:
     1. https://www.youtube.com/watch?v=PtBjKCVo2so&t=495s
+  - reset mate https://www.youtube.com/watch?v=prgvSGbjkSU&t=616s
+  - position: create a fortress then premove mate when up material and down on time
+  - position: achieve a draw. premove one move at a time. https://youtu.be/Fey3-E-KJxo?si=iIrWFFjQAiuvqlYQ&t=1790
+
 
 */
 
