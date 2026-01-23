@@ -8,17 +8,19 @@ import { createStockfishClient } from './stockfish/engine';
 const stockfish = createStockfishClient();
 let lastFen = '';
 let lastMovetimeMs = 0;
+let lastTickMs = 0;
 
 const syncStockfishConfig = () => {
-  const fen = state.stockfish.fen.trim();
+  const fen = state.stockfish.applied.fen.trim();
   if (!fen) return;
-  const movetimeMs = state.stockfish.movetimeMs;
+  const movetimeMs = state.stockfish.applied.movetimeMs;
   const fenChanged = fen !== lastFen;
   const movetimeChanged = movetimeMs !== lastMovetimeMs;
   if (!fenChanged && !movetimeChanged) return;
 
   stockfish.configure({ fen, movetimeMs });
   stockfish.newgame();
+  state.stockfish.cooldownMs = 0;
 
   if (fenChanged) {
     setPositionFromFen(fen);
@@ -66,12 +68,13 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
       if (isLegalMove(move)) {
         playMove(move);
         playSound('move');
+        state.stockfish.cooldownMs = state.stockfish.applied.movetimeMs;
         stockfish.play(move);
       }
     }
   }
 
-  if (stockfish.hasBestMove) {
+  if (stockfish.hasBestMove && state.stockfish.cooldownMs <= 0) {
     const reply = stockfish.takeBestMove();
     if (reply?.move) {
       playMove(reply.move);
@@ -82,6 +85,13 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
 
 export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
   const tick = () => {
+    const now = performance.now();
+    const dt = lastTickMs > 0 ? now - lastTickMs : 0;
+    lastTickMs = now;
+    if (state.stockfish.cooldownMs > 0) {
+      state.stockfish.cooldownMs = Math.max(0, state.stockfish.cooldownMs - dt);
+    }
+
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('!!');
     const rect = canvas.getBoundingClientRect();
