@@ -21,6 +21,7 @@ const syncStockfishConfig = () => {
   stockfish.configure({ fen, movetimeMs });
   stockfish.newgame();
   state.stockfish.cooldownMs = 0;
+  state.premoves = [];
 
   if (fenChanged) {
     setPositionFromFen(fen);
@@ -36,6 +37,7 @@ const white = '#eeeed2';
 
 function update(boardRect: BoardRect, canvasRect: DOMRect) {
   syncStockfishConfig();
+  const engineTurn = stockfish.isThinking || stockfish.hasBestMove || state.stockfish.cooldownMs > 0;
   const mouseRelativeToCanvas = {
     x: state.mouse.x - canvasRect.left,
     y: state.mouse.y - canvasRect.top,
@@ -66,10 +68,13 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
       state.dragging = false;
 
       if (isLegalMove(move)) {
-        playMove(move);
-        playSound('move');
-        state.stockfish.cooldownMs = state.stockfish.applied.movetimeMs;
-        stockfish.play(move);
+        if (engineTurn) {
+          state.premoves.push(move);
+        } else if (playMove(move)) {
+          playSound('move');
+          state.stockfish.cooldownMs = state.stockfish.applied.movetimeMs;
+          stockfish.play(move);
+        }
       }
     }
   }
@@ -79,6 +84,18 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
     if (reply?.move) {
       playMove(reply.move);
       playSound('move');
+      if (state.premoves.length > 0) {
+        const premove = state.premoves.shift()!;
+        if (!isLegalMove(premove) || !playMove(premove)) {
+          state.premoves = [];
+        } else {
+          playSound('move');
+          state.stockfish.cooldownMs = state.stockfish.applied.movetimeMs;
+          stockfish.play(premove);
+        }
+      }
+    } else {
+      state.premoves = [];
     }
   }
 }
