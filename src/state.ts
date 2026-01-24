@@ -1,19 +1,28 @@
-import { fenToPieces, formatMove, initialPieces } from './chess';
+import { Chess } from 'chess.js';
+import { parseUciMove, type PieceColor, type PieceType } from './chess';
 
-const startFen = '4k3/8/8/8/8/8/8/RNBQKBNR w - - 1 1'; // piecesToFen(initialPieces);
+const startFen = '4k3/8/8/8/8/8/8/RNBQKBNR w - - 1 1';
 const defaultStockfishConfig = {
   fen: startFen,
   movetimeMs: 2000,
 };
 
+type DraggingPiece = {
+  from: string;
+  type: PieceType;
+  color: PieceColor;
+};
+
 export const state = {
-  pieces: initialPieces,
+  game: new Chess(startFen),
+  fen: startFen,
   stockfish: {
     setup: { ...defaultStockfishConfig },
     applied: { ...defaultStockfishConfig },
     cooldownMs: 0,
   },
-  dragging: false as false | number, // index of dragged piece in the pieces[]
+  premoves: [] as string[],
+  dragging: false as false | DraggingPiece,
   mouse: {
     x: 0,
     y: 0,
@@ -52,20 +61,56 @@ export function cleanupInputs() {
 }
 
 export function setPositionFromFen(fen: string) {
-  state.pieces = fenToPieces(fen);
-  state.dragging = false;
+  try {
+    const game = new Chess(fen);
+    state.game = game;
+    state.fen = game.fen();
+    state.dragging = false;
+    state.premoves = [];
+    return true;
+  } catch (error) {
+    console.error('[fen]', error);
+    return false;
+  }
 }
 
-export function playMove(move: string) {
-  const moveToPlay = formatMove(move);
-  const piece = state.pieces.find(({ rank, file }) => moveToPlay.from.file === file && moveToPlay.from.rank === rank);
-  if (!piece) return;
-  const otherPieceIndex = state.pieces.findIndex(
-    ({ rank, file }) => moveToPlay.to.file === file && moveToPlay.to.rank === rank,
-  );
-  if (otherPieceIndex !== -1) {
-    state.pieces.splice(otherPieceIndex, 1);
+export function normalizeUciMove(game: Chess, uci: string) {
+  const parsed = parseUciMove(uci);
+  if (!parsed) return null;
+  const { from, to, promotion } = parsed;
+  const legalMoves = game.moves({ verbose: true });
+  const candidates = legalMoves.filter((move) => move.from === from && move.to === to);
+  if (candidates.length === 0) return null;
+
+  if (promotion) {
+    return candidates.some((move) => move.promotion === promotion) ? `${from}${to}${promotion}` : null;
   }
-  piece.rank = moveToPlay.to.rank;
-  piece.file = moveToPlay.to.file;
+
+  const promotionChoice =
+    candidates.find((move) => move.promotion === 'q')?.promotion ??
+    candidates.find((move) => move.promotion)?.promotion;
+
+  return promotionChoice ? `${from}${to}${promotionChoice}` : `${from}${to}`;
+}
+
+export function applyUciMove(game: Chess, uci: string) {
+  const normalized = normalizeUciMove(game, uci);
+  if (!normalized) return null;
+  const from = normalized.slice(0, 2);
+  const to = normalized.slice(2, 4);
+  const promotion = normalized.length > 4 ? normalized[4] : undefined;
+  try {
+    game.move({ from, to, promotion });
+  } catch (error) {
+    console.error('[move]', error);
+    return null;
+  }
+  return normalized;
+}
+
+export function playMove(uci: string) {
+  const normalized = applyUciMove(state.game, uci);
+  if (!normalized) return null;
+  state.fen = state.game.fen();
+  return normalized;
 }

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tanstack/solid-query": "5.90.22",
+    "chess.js": "1.4.0",
     "solid-js": "1.9.10",
     "stockfish": "17.1.0"
   },
