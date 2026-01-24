@@ -1,12 +1,17 @@
-import { fenToPieces, formatMove, initialPieces, piecesToFen } from './chess';
+import { fenToPieces, formatMove, initialPieces } from './chess';
 
 const startFen = '4k3/8/8/8/8/8/8/RNBQKBNR w - - 1 1'; // piecesToFen(initialPieces);
+const defaultStockfishConfig = {
+  fen: startFen,
+  movetimeMs: 2000,
+};
 
 export const state = {
   pieces: initialPieces,
   stockfish: {
-    fen: startFen,
-    movetimeMs: 2000,
+    setup: { ...defaultStockfishConfig },
+    applied: { ...defaultStockfishConfig },
+    cooldownMs: 0,
   },
   dragging: false as false | number, // index of dragged piece in the pieces[]
   mouse: {

@@ -33,9 +33,9 @@ export const App = () => {
             <input
               class="w-full rounded-md border border-white/10 bg-neutral-700/60 px-3 py-1.5 text-sm text-white shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-800"
               type="text"
-              value={state.stockfish.fen}
+              value={state.stockfish.setup.fen}
               onInput={(event) => {
-                state.stockfish.fen = event.currentTarget.value;
+                state.stockfish.setup.fen = event.currentTarget.value;
               }}
             />
           </label>
@@ -65,15 +65,24 @@ export const App = () => {
             <input
               class="w-24 rounded-md border border-white/10 bg-neutral-700/60 px-3 py-1.5 text-right text-sm text-white shadow-sm tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-800"
               type="text"
-              value={state.stockfish.movetimeMs / 1000}
+              value={state.stockfish.setup.movetimeMs / 1000}
               onInput={(event) => {
                 const next = Number(event.currentTarget.value);
                 if (!Number.isNaN(next)) {
-                  state.stockfish.movetimeMs = Math.max(1, Math.round(next * 1000));
+                  state.stockfish.setup.movetimeMs = Math.max(1, Math.round(next * 1000));
                 }
               }}
             />
           </label>
+          <button
+            class="rounded-md bg-amber-400 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-300"
+            type="button"
+            onClick={() => {
+              state.stockfish.applied = { ...state.stockfish.setup };
+            }}
+          >
+            Play
+          </button>
           {/*<div>Move history + depth log</div>*/}
           {/*<div>First move starts timer</div>*/}
           {/*<div>Choose color by first move</div>*/}
