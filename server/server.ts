@@ -29,6 +29,8 @@ strats:
   - position: create a fortress then premove mate when up material and down on time
   - position: achieve a draw. premove one move at a time. https://youtu.be/Fey3-E-KJxo?si=iIrWFFjQAiuvqlYQ&t=1790
 
+checkmates:
+  - https://youtu.be/lhLUDf6UzXI?si=SuAaF6gYG6uPwFdi&t=2796
 
 */
 
