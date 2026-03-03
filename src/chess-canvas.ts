@@ -1,8 +1,9 @@
+import { Chess } from 'chess.js';
 import { onCleanup } from 'solid-js';
-import { isLegalMove, PieceColor, PieceType, rankAndFileToString } from './chess';
+import { boardToPieces, rankAndFileToString, type RenderPiece } from './chess';
 import { pieceImage } from './pieces';
 import { playSound } from './sound-effects';
-import { cleanupInputs, playMove, setPositionFromFen, state } from './state';
+import { applyUciMove, cleanupInputs, normalizeUciMove, playMove, setPositionFromFen, state } from './state';
 import { createStockfishClient } from './stockfish/engine';
 
 const stockfish = createStockfishClient();
@@ -18,15 +19,22 @@ const syncStockfishConfig = () => {
   const movetimeChanged = movetimeMs !== lastMovetimeMs;
   if (!fenChanged && !movetimeChanged) return;
 
-  stockfish.configure({ fen, movetimeMs });
+  let nextFen = lastFen || state.fen;
+  if (fenChanged) {
+    const loaded = setPositionFromFen(fen);
+    if (!loaded) {
+      return;
+    }
+    nextFen = state.fen;
+    state.stockfish.applied.fen = nextFen;
+  }
+
+  stockfish.configure({ fen: nextFen, movetimeMs });
   stockfish.newgame();
   state.stockfish.cooldownMs = 0;
   state.premoves = [];
 
-  if (fenChanged) {
-    setPositionFromFen(fen);
-  }
-  lastFen = fen;
+  lastFen = nextFen;
   lastMovetimeMs = movetimeMs;
 };
 
@@ -35,9 +43,34 @@ syncStockfishConfig();
 const green = '#769656';
 const white = '#eeeed2';
 
+const flipTurn = (turn: 'w' | 'b') => (turn === 'w' ? 'b' : 'w');
+
+const setFenTurn = (fen: string, turn: 'w' | 'b') => {
+  const parts = fen.split(/\s+/);
+  if (parts.length < 2) return fen;
+  parts[1] = turn;
+  return parts.join(' ');
+};
+
+const buildPreviewGame = (userTurn: 'w' | 'b') => {
+  let preview = new Chess(state.fen);
+  for (const premove of state.premoves) {
+    const validation = new Chess(setFenTurn(preview.fen(), userTurn));
+    if (!applyUciMove(validation, premove)) {
+      break;
+    }
+    preview = new Chess(setFenTurn(validation.fen(), userTurn));
+  }
+  return preview;
+};
+
 function update(boardRect: BoardRect, canvasRect: DOMRect) {
   syncStockfishConfig();
   const engineTurn = stockfish.isThinking || stockfish.hasBestMove || state.stockfish.cooldownMs > 0;
+  const userTurn = engineTurn ? flipTurn(state.game.turn()) : state.game.turn();
+  const previewGame = buildPreviewGame(userTurn);
+  const validationGame = new Chess(setFenTurn(previewGame.fen(), userTurn));
+  const renderPieces = boardToPieces(previewGame.board());
   const mouseRelativeToCanvas = {
     x: state.mouse.x - canvasRect.left,
     y: state.mouse.y - canvasRect.top,
@@ -55,25 +88,35 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
     const file = Math.floor((mouseRelativeToCanvas.x / boardRect.size) * 8) + 1;
     const rank = 8 - Math.floor((mouseRelativeToCanvas.y / boardRect.size) * 8);
 
-    const pieceUnderCursor = state.pieces.findIndex((piece) => piece.rank == rank && piece.file === file);
+    const pieceUnderCursor = renderPieces.find((piece) => piece.rank === rank && piece.file === file);
 
-    if (pieceUnderCursor !== -1 && !state.dragging && state.mouse.justPressed) {
-      state.dragging = pieceUnderCursor;
+    if (pieceUnderCursor && !state.dragging && state.mouse.justPressed) {
+      state.dragging = {
+        from: pieceUnderCursor.square,
+        type: pieceUnderCursor.type,
+        color: pieceUnderCursor.color,
+      };
     }
 
     if (state.mouse.justReleased && state.dragging) {
-      const before = rankAndFileToString(state.pieces[state.dragging]!);
+      const before = state.dragging.from;
       const after = rankAndFileToString({ rank, file });
       const move = `${before}${after}`;
       state.dragging = false;
 
-      if (isLegalMove(move)) {
-        if (engineTurn) {
-          state.premoves.push(move);
-        } else if (playMove(move)) {
-          playSound('move');
-          state.stockfish.cooldownMs = state.stockfish.applied.movetimeMs;
-          stockfish.play(move);
+      if (before !== after) {
+        const normalizedMove = normalizeUciMove(validationGame, move);
+        if (normalizedMove) {
+          if (engineTurn) {
+            state.premoves.push(normalizedMove);
+          } else {
+            const appliedMove = playMove(normalizedMove);
+            if (appliedMove) {
+              playSound('move');
+              state.stockfish.cooldownMs = state.stockfish.applied.movetimeMs;
+              stockfish.play(appliedMove);
+            }
+          }
         }
       }
     }
@@ -82,22 +125,32 @@ function update(boardRect: BoardRect, canvasRect: DOMRect) {
   if (stockfish.hasBestMove && state.stockfish.cooldownMs <= 0) {
     const reply = stockfish.takeBestMove();
     if (reply?.move) {
-      playMove(reply.move);
+      const appliedReply = playMove(reply.move);
+      if (!appliedReply) {
+        state.premoves = [];
+        return renderPieces;
+      }
       playSound('move');
       if (state.premoves.length > 0) {
         const premove = state.premoves.shift()!;
-        if (!isLegalMove(premove) || !playMove(premove)) {
+        const appliedPremove = playMove(premove);
+        if (!appliedPremove) {
           state.premoves = [];
         } else {
           playSound('move');
           state.stockfish.cooldownMs = state.stockfish.applied.movetimeMs;
-          stockfish.play(premove);
+          stockfish.play(appliedPremove);
         }
       }
     } else {
       state.premoves = [];
     }
   }
+
+  const finalEngineTurn = stockfish.isThinking || stockfish.hasBestMove || state.stockfish.cooldownMs > 0;
+  const finalUserTurn = finalEngineTurn ? flipTurn(state.game.turn()) : state.game.turn();
+  const finalPreviewGame = buildPreviewGame(finalUserTurn);
+  return boardToPieces(finalPreviewGame.board());
 }
 
 export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
@@ -126,16 +179,13 @@ export const startCanvasLoop = (canvas: HTMLCanvasElement) => {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
-    // update
-    {
-      update(boardRect, rect);
-    }
+    const renderPieces = update(boardRect, rect);
 
     // draw
     {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBoard(ctx, boardRect);
-      drawPieces(ctx, boardRect, state.pieces);
+      drawPieces(ctx, boardRect, renderPieces);
     }
 
     // cleanup
@@ -179,39 +229,37 @@ function calculateBoardRect(rect: DOMRect) {
 
 type BoardRect = ReturnType<typeof calculateBoardRect>;
 
-function drawPieces(
-  ctx: CanvasRenderingContext2D,
-  boardRect: BoardRect,
-  piecesToDraw: {
-    rank: number;
-    file: number;
-    type: PieceType;
-    color: PieceColor;
-  }[],
-) {
+function drawPieces(ctx: CanvasRenderingContext2D, boardRect: BoardRect, piecesToDraw: RenderPiece[]) {
   const squares = 8;
   const squareSize = boardRect.size / squares;
   const padding = squareSize * 0.08;
   const pieceSize = squareSize - padding * 2;
+  const dragging = state.dragging;
+  const draggingSquare = dragging ? dragging.from : '';
 
   for (let i = 0; i < piecesToDraw.length; i++) {
     const piece = piecesToDraw[i]!;
-    const img = pieceImage(piece.type, piece.color);
-    if (i === state.dragging) {
-      ctx.drawImage(
-        img,
-        state.mouse.boardX - pieceSize * 0.5,
-        state.mouse.boardY - pieceSize * 0.5,
-        pieceSize,
-        pieceSize,
-      );
-    } else {
-      const col = piece.file - 1;
-      const row = squares - piece.rank;
-      const x = boardRect.x + col * squareSize + padding;
-      const y = boardRect.y + row * squareSize + padding;
-      if (!img.complete) continue;
-      ctx.drawImage(img, x, y, pieceSize, pieceSize);
+    if (draggingSquare && piece.square === draggingSquare) {
+      continue;
     }
+    const img = pieceImage(piece.type, piece.color);
+    const col = piece.file - 1;
+    const row = squares - piece.rank;
+    const x = boardRect.x + col * squareSize + padding;
+    const y = boardRect.y + row * squareSize + padding;
+    if (!img.complete) continue;
+    ctx.drawImage(img, x, y, pieceSize, pieceSize);
+  }
+
+  if (dragging) {
+    const img = pieceImage(dragging.type, dragging.color);
+    if (!img.complete) return;
+    ctx.drawImage(
+      img,
+      state.mouse.boardX - pieceSize * 0.5,
+      state.mouse.boardY - pieceSize * 0.5,
+      pieceSize,
+      pieceSize,
+    );
   }
 }
