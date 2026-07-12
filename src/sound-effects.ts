@@ -55,14 +55,17 @@ for (const effect of allEffects) {
   loadBuffer(effect).catch(() => {});
 }
 
-export function playSound(effect: SoundEffect, options: { volume?: number } = {}) {
-  const buffer = bufferCache.get(effect);
-  if (!buffer) return loadBuffer(effect);
+function startSound(buffer: AudioBuffer, volume: number) {
   const source = audioContext.createBufferSource();
   source.buffer = buffer;
   const gain = audioContext.createGain();
-  gain.gain.value = options.volume ?? 1;
+  gain.gain.value = volume;
   source.connect(gain);
   gain.connect(masterGain);
   source.start();
+}
+
+export async function playSound(effect: SoundEffect, options: { volume?: number } = {}) {
+  const buffer = bufferCache.get(effect) ?? await loadBuffer(effect);
+  startSound(buffer, options.volume ?? 1);
 }

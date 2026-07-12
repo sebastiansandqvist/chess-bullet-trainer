@@ -11,7 +11,8 @@
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "types": [
-      "vite/client"
+      "vite/client",
+      "vite-plugin-pwa/client"
     ],
     /* bundler mode */
     "moduleResolution": "bundler",
@@ -37,5 +38,8 @@
   "include": [
     "src",
     "vite.config.ts"
+  ],
+  "exclude": [
+    "src/**/__tests__/**"
   ]
 }

@@ -1,196 +1,163 @@
-const STOCKFISH_WORKER_URL = '/stockfish/stockfish-17.1-8e4d048.js';
+import { STOCKFISH_WORKER_PATH } from './assets';
 
-type StockfishConfig = {
-  fen: string;
-  movetimeMs: number;
-};
+export type EngineState = 'idle' | 'loading' | 'ready' | 'searching' | 'stopping' | 'error';
+export type BestMove = { move: string; depth: number; sessionId: string; searchId: number };
 
-type StockfishReply = {
-  move: string;
-  depth: number;
-};
-
-const assert = (condition: unknown, message: string): asserts condition => {
-  if (!condition) {
-    throw new Error(message);
-  }
-};
-
-export function createStockfishClient(workerUrl = STOCKFISH_WORKER_URL) {
-  const worker = new Worker(workerUrl, { type: 'classic' });
-  let config: StockfishConfig | null = null;
-  let moveHistory: string[] = [];
-  let bestMove: StockfishReply | null = null;
+export function createStockfishEngine(workerUrl = STOCKFISH_WORKER_PATH) {
+  let worker: Worker | null = null;
+  let state: EngineState = 'idle';
+  let readyResolve: (() => void) | null = null;
+  let readyReject: ((error: Error) => void) | null = null;
+  let readyPromise: Promise<void> | null = null;
+  let pending: { sessionId: string; searchId: number } | null = null;
+  let queued: { fen: string; movetimeMs: number; sessionId: string; searchId: number } | null = null;
   let lastDepth = 0;
-  let armed = false;
-  let needsSearch = false;
-  let needsNewGame = false;
-  let awaitingStop = false;
+  const stateListeners = new Set<(state: EngineState, error?: string) => void>();
+  const moveListeners = new Set<(move: BestMove) => void>();
 
-  const engine = {
-    isReady: false,
-    isThinking: false,
-    hasBestMove: false,
-    configure,
-    newgame,
-    play,
-    takeBestMove,
-    stop,
+  const setState = (next: EngineState, error?: string) => {
+    state = next;
+    for (const listener of stateListeners) listener(next, error);
   };
+  const send = (command: string) => worker?.postMessage(command);
 
-  const send = (command: string) => {
-    worker.postMessage(command);
-  };
-
-  const clearBestMove = () => {
-    bestMove = null;
-    engine.hasBestMove = false;
-  };
-
-  const resetForNewGame = () => {
-    moveHistory = [];
-    lastDepth = 0;
-    clearBestMove();
-    needsSearch = false;
-    needsNewGame = true;
-  };
-
-  const positionCommand = () => {
-    assert(config, 'Stockfish not configured. Call configure() first.');
-    const moves = moveHistory.join(' ');
-    if (moves.length > 0) {
-      return `position fen ${config.fen} moves ${moves}`;
-    }
-    return `position fen ${config.fen}`;
-  };
-
-  const maybeStartSearch = () => {
-    if (!engine.isReady || !armed || engine.isThinking || awaitingStop || !needsSearch) return;
-    assert(config, 'Stockfish not configured. Call configure() first.');
-    if (needsNewGame) {
-      send('ucinewgame');
-      needsNewGame = false;
-    }
-    send(positionCommand());
-    send(`go movetime ${config.movetimeMs}`);
-    engine.isThinking = true;
-    needsSearch = false;
-  };
-
-  const handleLine = (rawLine: string) => {
-    const line = rawLine.trim();
-    if (!line) return;
-
+  const handleLine = (line: string) => {
     if (line === 'uciok') {
+      send('setoption name Threads value 1');
       send('isready');
       return;
     }
-
     if (line === 'readyok') {
-      engine.isReady = true;
-      maybeStartSearch();
+      setState('ready');
+      readyResolve?.();
+      readyResolve = null;
+      readyReject = null;
       return;
     }
-
     if (line.startsWith('info ')) {
-      const match = /(?:^|\s)depth\s+(\d+)/.exec(line);
-      if (match) {
-        lastDepth = Number(match[1]);
-      }
+      const depth = /(?:^|\s)depth\s+(\d+)/.exec(line)?.[1];
+      if (depth) lastDepth = Number(depth);
       return;
     }
-
-    if (line.startsWith('bestmove')) {
-      engine.isThinking = false;
-
-      if (awaitingStop) {
-        awaitingStop = false;
-        lastDepth = 0;
-        maybeStartSearch();
-        return;
-      }
-
-      const move = line.split(' ')[1] ?? '';
-      const normalizedMove = move === '(none)' ? '' : move;
-      bestMove = { move: normalizedMove, depth: lastDepth };
-      engine.hasBestMove = true;
-      lastDepth = 0;
-
-      if (normalizedMove) {
-        moveHistory.push(normalizedMove);
-      }
+    if (!line.startsWith('bestmove')) return;
+    if (state === 'stopping') {
+      const next = queued;
+      queued = null;
+      pending = null;
+      if (next) startSearch(next);
+      else setState('ready');
+      return;
     }
+    const active = pending;
+    pending = null;
+    setState('ready');
+    if (!active) return;
+    const rawMove = line.split(/\s+/)[1] ?? '';
+    const move = rawMove === '(none)' ? '' : rawMove;
+    for (const listener of moveListeners) {
+      listener({ move, depth: lastDepth, ...active });
+    }
+    lastDepth = 0;
   };
 
   const handleMessage = (event: MessageEvent) => {
-    const text = typeof event.data === 'string' ? event.data : String(event.data);
-    for (const line of text.split('\n')) {
-      handleLine(line);
-    }
+    const output = typeof event.data === 'string' ? event.data : String(event.data);
+    for (const line of output.split('\n')) handleLine(line.trim());
   };
 
   const handleError = (event: ErrorEvent) => {
-    console.error('[stockfish]', event.error ?? event.message);
+    const error = event.error instanceof Error ? event.error : new Error(event.message);
+    pending = null;
+    setState('error', error.message);
+    readyReject?.(error);
+    readyResolve = null;
+    readyReject = null;
   };
 
-  worker.addEventListener('message', handleMessage);
-  worker.addEventListener('error', handleError);
-  send('uci');
+  function boot() {
+    if (state === 'error') dispose();
+    if (readyPromise) return readyPromise;
+    setState('loading');
+    readyPromise = new Promise<void>((resolve, reject) => {
+      readyResolve = resolve;
+      readyReject = reject;
+      try {
+        worker = new Worker(workerUrl, { type: 'classic' });
+        worker.addEventListener('message', handleMessage);
+        worker.addEventListener('error', handleError);
+        send('uci');
+      } catch (error) {
+        handleError({ error, message: error instanceof Error ? error.message : String(error) } as ErrorEvent);
+      }
+    });
+    return readyPromise;
+  }
 
-  function configure(nextConfig: StockfishConfig) {
-    const fen = nextConfig.fen.trim();
-    assert(fen.length > 0, 'Stockfish requires a FEN string.');
-    const movetimeMs = Math.max(1, Math.round(nextConfig.movetimeMs));
-    config = { fen, movetimeMs };
-    armed = false;
-    resetForNewGame();
-    if (engine.isThinking && !awaitingStop) {
-      send('stop');
-      awaitingStop = true;
+  function startSearch(args: {
+    fen: string;
+    movetimeMs: number;
+    sessionId: string;
+    searchId: number;
+  }) {
+    pending = { sessionId: args.sessionId, searchId: args.searchId };
+    lastDepth = 0;
+    send('position fen ' + args.fen);
+    send(`go movetime ${Math.max(1, Math.round(args.movetimeMs))}`);
+    setState('searching');
+  }
+
+  async function search(args: {
+    fen: string;
+    movetimeMs: number;
+    sessionId: string;
+    searchId: number;
+  }) {
+    await boot();
+    if (!worker) throw new Error('Stockfish worker is unavailable.');
+    if (state === 'searching' || state === 'stopping') {
+      queued = args;
+      pending = null;
+      if (state === 'searching') {
+        setState('stopping');
+        send('stop');
+      }
+      return;
     }
-  }
-
-  function newgame() {
-    assert(config, 'Stockfish not configured. Call configure() first.');
-    resetForNewGame();
-    armed = true;
-
-    if (engine.isThinking && !awaitingStop) {
-      send('stop');
-      awaitingStop = true;
-    }
-  }
-
-  function play(move: string) {
-    assert(config, 'Stockfish not configured. Call configure() first.');
-    assert(armed, 'Stockfish not armed. Call newgame() first.');
-    if (!move) return;
-    if (engine.isThinking && !awaitingStop) return;
-
-    moveHistory.push(move);
-    needsSearch = true;
-    maybeStartSearch();
-  }
-
-  function takeBestMove() {
-    if (!engine.hasBestMove || !bestMove) return null;
-    const reply = bestMove;
-    clearBestMove();
-    return reply;
+    startSearch(args);
   }
 
   function stop() {
-    armed = false;
-    needsSearch = false;
-    needsNewGame = false;
-    clearBestMove();
-    lastDepth = 0;
-
-    if (engine.isThinking && !awaitingStop) {
-      send('stop');
-      awaitingStop = true;
-    }
+    queued = null;
+    if (state !== 'searching') return;
+    pending = null;
+    setState('stopping');
+    send('stop');
   }
 
-  return engine;
+  function dispose() {
+    pending = null;
+    queued = null;
+    worker?.removeEventListener('message', handleMessage);
+    worker?.removeEventListener('error', handleError);
+    worker?.terminate();
+    worker = null;
+    readyPromise = null;
+    setState('idle');
+  }
+
+  return {
+    boot,
+    search,
+    stop,
+    dispose,
+    getState: () => state,
+    onState(listener: (state: EngineState, error?: string) => void) {
+      stateListeners.add(listener);
+      return () => stateListeners.delete(listener);
+    },
+    onBestMove(listener: (move: BestMove) => void) {
+      moveListeners.add(listener);
+      return () => moveListeners.delete(listener);
+    },
+  };
 }
